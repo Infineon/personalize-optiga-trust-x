@@ -64,19 +64,21 @@ PAL_SOURCES =  	$(PAL_DIR)/pal.c \
 # Platform Abstraction Layer (PAL) header file dependencies					
 PAL_INCLUDES =  	-I$(OPTIGA_CORE_DIR)/include/pal/ \
 					-I$(PAL_DIR)/
+					
+##############################################################
 
 # Directory with JSON parser files
-JSON_DIR = 		$(ROOT_DIR)/json_parser
+JSON_DIR = 			$(ROOT_DIR)/json_parser
 
 # JSON parser source code files to be built
 JSON_SOURCES =		$(JSON_DIR)/cJSON.c \
-			$(JSON_DIR)/JSON_parser.c
+					$(JSON_DIR)/JSON_parser.c
 					
 # JSON parser includes
 JSON_INCLUDES =		-I$(JSON_DIR)
 					
-# Directory with the Platform Abstraction Layer (PAL) for OPTIGA(TM) Trust X
-GEN_CSR_DIR = 		$(ROOT_DIR)/optiga_generate_csr
+# Directory with the Generate CSR Application
+GEN_CSR_DIR = 		$(ROOT_DIR)
 
 # Generate CSR application source code files to be built
 GEN_CSR_SOURCES=	$(GEN_CSR_DIR)/optiga_generate_csr.c 
@@ -85,10 +87,20 @@ GEN_CSR_SOURCES=	$(GEN_CSR_DIR)/optiga_generate_csr.c
 GEN_CSR_INCLUDES=	-I$(GEN_CSR_DIR) \
                     -I$(ROOT_DIR)/mbedtls-2.6.0/include
 
+# Directory with the Upload Generated Certificate
+UPLOAD_CRT_DIR = 	$(ROOT_DIR)
+
+# Generate CSR application source code files to be built
+UPLOAD_CRT_SOURCES=	$(UPLOAD_CRT_DIR)/optiga_upload_crt.c 
+
+# Generate CSR application header file dependencies					
+UPLOAD_CRT_INCLUDES=-I$(UPLOAD_CRT_DIR) \
+                    -I$(ROOT_DIR)/mbedtls-2.6.0/include
+					
 CCFLAGS =           -g -Wall -DPAL_OS_HAS_EVENT_INIT
 
 LDFLAGS =           -L$(ROOT_DIR)/mbedtls-2.6.0/library/ 
-LDLIBS  =           -lmbedtls -lmbedx509 -lmbedcrypto -lwiringPi -lwiringPiDev -lrt
+LDLIBS  =           -lmbedtls -lmbedx509 -lmbedcrypto -lrt
 
 #############################################################################
 

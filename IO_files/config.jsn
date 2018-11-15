@@ -1,7 +1,6 @@
 {
-	"CN":	"L12112121111111123456789123456789123456789",
-	"O":	"nfiieon AG123456789",
-	"C":	"DE",
-	"ST":	"Gerxny",
-	"emailAddress":	"o222rt@root.com12"
+	"CN":	"AWS IoT Certificate",
+	"O":	"Xilinx Inc.",
+	"C":	"US",
+	"ST":	"United States"
 }

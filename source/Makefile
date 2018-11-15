@@ -37,10 +37,11 @@ BUILD_DIR =				$(ROOT_DIR)/build
 
 OPTIGA_CORE_OBJECTS =	$(patsubst %.c, $(BUILD_DIR)/%.o, $(SOURCES))
 GEN_CSR_OBJECTS =		$(patsubst %.c, $(BUILD_DIR)/%.o, $(GEN_CSR_SOURCES))
+UPLOAD_CRT_OBJECTS =	$(patsubst %.c, $(BUILD_DIR)/%.o, $(UPLOAD_CRT_SOURCES))
 
 .PHONY: dir all clean
 
-all: dir $(BIN_DIR)/optiga_generate_csr
+all: dir mbedtls $(BIN_DIR)/optiga_generate_csr $(BIN_DIR)/optiga_upload_crt
 
 #Make application note
 
@@ -48,6 +49,9 @@ all: dir $(BIN_DIR)/optiga_generate_csr
 dir:
 	$(MKDIR) -p $(BUILD_DIR)
 	$(MKDIR) -p $(BIN_DIR)
+	
+mbedtls:
+	$(MAKE) -C $(ROOT_DIR)/mbedtls-2.6.0/ no_test
 
 $(BUILD_DIR)/%.o: %.c
 	@echo Compiling $<
@@ -56,8 +60,11 @@ $(BUILD_DIR)/%.o: %.c
 
 $(BIN_DIR)/optiga_generate_csr: $(OPTIGA_CORE_OBJECTS) $(GEN_CSR_OBJECTS)
 	@echo Linking $@
-	$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
-
+	@$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
+	
+$(BIN_DIR)/optiga_upload_crt: $(OPTIGA_CORE_OBJECTS) $(UPLOAD_CRT_OBJECTS)
+	@echo Linking $@
+	@$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
 	
 #Clean
 clean: 

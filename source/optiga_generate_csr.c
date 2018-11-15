@@ -65,8 +65,12 @@
  */
 optiga_comms_t optiga_comms = {(void*)&ifx_i2c_context_0,NULL,NULL, OPTIGA_COMMS_SUCCESS};
 uint16_t POID = 0;
+char * i2c_if;
 
-int optiga_sign_wrap( void *ctx, mbedtls_md_type_t md_alg,
+extern void pal_gpio_init(void);
+extern void pal_gpio_deinit(void);
+
+int __optiga_sign_wrap( void *ctx, mbedtls_md_type_t md_alg,
                       const unsigned char *hash, size_t hash_len,
                       unsigned char *sig, size_t *sig_len,
                       int (*f_rng)(void *, unsigned char *, size_t),
@@ -95,7 +99,7 @@ int optiga_sign_wrap( void *ctx, mbedtls_md_type_t md_alg,
 
     for(int i = 0; i < *sig_len; i++ )
         mbedtls_printf("%c%c", "0123456789ABCDEF" [sig[i] / 16], "0123456789ABCDEF" [sig[i] % 16] );
-    mbedtls_printf( " Size %d\n", *sig_len);
+    mbedtls_printf( " Size %lu\n", *sig_len);
 	
 	return 0;
 }
@@ -106,7 +110,7 @@ const mbedtls_pk_info_t mbedtls_ecdsa_optiga_info = {
 	NULL,
 	NULL,
 	NULL,
-	optiga_sign_wrap,
+	__optiga_sign_wrap,
     NULL,
     NULL,
 	NULL,
@@ -244,9 +248,10 @@ static void __mbedtls_dump_pubkey( const char *title, mbedtls_ecdsa_context *key
 void usage(void){
   fprintf(stderr,
       " usage:\n"
-      "    ./optiga_generate_csr -o file -i json_file [-p  cert_oid] [-r perso_string]\n"
-      "       -o  file:             Path to output-file. If file does not exist, it will be automatically created.\n"
+      "    ./optiga_generate_csr -f i2c_path -o file -i json_file [-p  cert_oid] [-r perso_string]\n"
+      "       -f  i2c_path:         Path to i2c intreface; e.g. -f /dev/i2c-0 \n" 
       "       -i  json_file:        Path to input-file. It contains information about the certificate requestor.\n"
+      "       -o  file:             Path to output-file. If file does not exist, it will be automatically created.\n"
       "       -p  cert_oid:         Select Object ID to store new private key within OPTIGA(TM) Trust X.\n"
       "                             Can be 0xE0F1, 0xE0F2, 0xE0F3. 0xE0F1 is used by default\n"
       "       -r  perso_string:     Add you personalisation information to randomise a random number generator.\n"
@@ -283,20 +288,21 @@ int32_t main(int argc, char ** argv)
 	int c;
 
 	/* Parse arguments of function call */
-	if(argc < 5) {
+	if(argc < 7) {
 		usage();
 		return EXIT_FAILURE;
-	}
+	}	
 	
-	
-	
-	while((c = getopt (argc, argv, "i:o:p:r:")) != -1) {
+	while((c = getopt (argc, argv, "i:o:f:p:r")) != -1) {
 		switch(c) {
 		case 'i':
 			file_str = optarg;
 			break;
 		case 'o':
 			output_file = optarg;
+			break;
+		case 'f':
+			i2c_if = optarg;
 			break;
 		case 'p':
 			output_file = optarg;
@@ -326,6 +332,9 @@ int32_t main(int argc, char ** argv)
 			else if(optopt == 'o') {
 				fprintf(stderr, "Option -%i requires an argument. \n", optopt);
 			}
+			else if(optopt == 'f') {
+				fprintf(stderr, "Option -%i requires an argument. \n", optopt);
+			}
 			else if (isprint(optopt)) {
 				fprintf(stderr, "Unknown option -%c. \n", optopt);
 			}
@@ -348,77 +357,89 @@ int32_t main(int argc, char ** argv)
 		return EXIT_FAILURE;
 	}
 	printf("%s\n",subject_name);
-	
-    /* Initialise OPTIGA(TM) Trust X */
-    if (__optiga_init() != OPTIGA_LIB_SUCCESS)
+
+	/* Initialise OPTIGA(TM) Trust X */
+	if (__optiga_init() != OPTIGA_LIB_SUCCESS)
 	{
 		printf("OPTIGA Open Application failed.\n");
 		return -1;
 	}
 	printf("OPTIGA(TM) Trust X initialized.\n");
 	
-	/* Generate ECC P256 keypair and export the public component*/
-    if (__optiga_genkeypair(POID, public_key, &public_key_length) != OPTIGA_LIB_SUCCESS)
+	do 
 	{
-		printf("OPTIGA Key Generation failed.\n");
-		return -1;
-	}
-	printf("Keypair generated.\n");
+		/* Generate ECC P256 keypair and export the public component*/
+		if (__optiga_genkeypair(POID, public_key, &public_key_length) != OPTIGA_LIB_SUCCESS)
+		{
+			printf("OPTIGA Key Generation failed.\n");
+			ret = -1;
+			break;
+		}
+		printf("Keypair generated.\n");
+		
+		mbedtls_ecp_keypair_init(&keypair);
+
+		mbedtls_ecp_group_load(&keypair.grp, MBEDTLS_ECP_DP_SECP256R1);
+		
+		if (mbedtls_ecp_point_read_binary(&keypair.grp, &keypair.Q, &public_key[3], public_key_length-3))
+		{
+			mbedtls_printf( " failed\n  !  mbedtls_ecp_point_read_binary returned\n");
+			ret = -1;
+			break;
+		}
+
+		if (mbedtls_ecdsa_from_keypair(&ecdsa_context, &keypair))
+		{
+			mbedtls_printf( " failed\n  !  mbedtls_ecdsa_from_keypair returned\n");
+			ret = -1;
+			break;
+		}
+
+		__mbedtls_dump_pubkey("Public key is \n",&ecdsa_context);
+
+		mbedtls_x509write_csr_init(&req);
+		mbedtls_x509write_csr_set_md_alg(&req, MBEDTLS_MD_SHA256);
+		mbedtls_pk_init(&key);
+		mbedtls_ctr_drbg_init(&ctr_drbg);
+
+		mbedtls_x509write_csr_set_key_usage(&req, MBEDTLS_X509_KU_DIGITAL_SIGNATURE);
+
+		mbedtls_printf("  . Seeding the random number generator...\n");
+		mbedtls_entropy_init(&entropy);
+		if(mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy,
+								 (const unsigned char *) pers, strlen(pers)))
+		{
+			mbedtls_printf( " failed\n  !  mbedtls_ctr_drbg_seed returned %d", ret );
+			ret =  -1;
+			break;
+		}
+
+		mbedtls_printf("  . Checking subject name...\n");
+		if (mbedtls_x509write_csr_set_subject_name( &req, subject_name))
+		{
+			mbedtls_printf( " failed\n  !  mbedtls_x509write_csr_set_subject_name returned %d\n", ret );
+			ret = -1;
+			break;
+		}
+
+		mbedtls_printf("  . Loading the private key ...\n");
+		key.pk_info = &mbedtls_ecdsa_optiga_info;
+		key.pk_ctx = &keypair;
+		mbedtls_x509write_csr_set_key( &req, &key);
+		mbedtls_printf("  . Writing the certificate request ...\n");
+		if (__write_csr(&req, output_file, mbedtls_ctr_drbg_random, &ctr_drbg))
+		{
+			mbedtls_printf(" failed\n  !  write_certifcate_request %d\n", ret);
+			ret = -1;
+			break;
+		}
+
+		ret = 0;
+		mbedtls_printf("ok\n");
+	} while(0);
 	
-	mbedtls_ecp_keypair_init(&keypair);
-
-	mbedtls_ecp_group_load(&keypair.grp, MBEDTLS_ECP_DP_SECP256R1);
-	
-	if (mbedtls_ecp_point_read_binary(&keypair.grp, &keypair.Q, &public_key[3], public_key_length-3))
-	{
-		mbedtls_printf( " failed\n  !  mbedtls_ecp_point_read_binary returned\n");
-		return -1;
-	}
-
-	if (mbedtls_ecdsa_from_keypair(&ecdsa_context, &keypair))
-	{
-		mbedtls_printf( " failed\n  !  mbedtls_ecdsa_from_keypair returned\n");
-		return -1;
-	}
-
-	__mbedtls_dump_pubkey("Public key is \n",&ecdsa_context);
-
-    mbedtls_x509write_csr_init(&req);
-    mbedtls_x509write_csr_set_md_alg(&req, MBEDTLS_MD_SHA256);
-    mbedtls_pk_init(&key);
-    mbedtls_ctr_drbg_init(&ctr_drbg);
-
-	mbedtls_x509write_csr_set_key_usage(&req, MBEDTLS_X509_KU_DIGITAL_SIGNATURE);
-
-    mbedtls_printf("  . Seeding the random number generator...\n");
-    mbedtls_entropy_init(&entropy);
-    if(mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy,
-                             (const unsigned char *) pers, strlen(pers)))
-    {
-        mbedtls_printf( " failed\n  !  mbedtls_ctr_drbg_seed returned %d", ret );
-        return -1;
-    }
-
-    mbedtls_printf("  . Checking subject name...\n");
-    if (mbedtls_x509write_csr_set_subject_name( &req, subject_name))
-    {
-        mbedtls_printf( " failed\n  !  mbedtls_x509write_csr_set_subject_name returned %d\n", ret );
-        return -1;
-    }
-
-    mbedtls_printf("  . Loading the private key ...\n");
-    key.pk_info = &mbedtls_ecdsa_optiga_info;
-    key.pk_ctx = &keypair;
-    mbedtls_x509write_csr_set_key( &req, &key);
-    mbedtls_printf("  . Writing the certificate request ...\n");
-    if (__write_csr(&req, output_file, mbedtls_ctr_drbg_random, &ctr_drbg))
-    {
-        mbedtls_printf(" failed\n  !  write_certifcate_request %d\n", ret);
-        return -1;
-    }
-
-    mbedtls_printf("ok\n");
-    return 0;
+	__optiga_deinit();
+    return ret;
 }
 
 
