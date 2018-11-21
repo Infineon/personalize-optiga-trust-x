@@ -388,6 +388,8 @@ int32_t main(int argc, char ** argv)
 			break;
 		}
 
+		mbedtls_ecdsa_init(&ecdsa_context);
+
 		if (mbedtls_ecdsa_from_keypair(&ecdsa_context, &keypair))
 		{
 			mbedtls_printf( " failed\n  !  mbedtls_ecdsa_from_keypair returned\n");
