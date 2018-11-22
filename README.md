@@ -19,15 +19,21 @@ For this application note you need to hav:
 * OPTIGA™ Trust X which is possile to connect to i2c lines on the Linux board
 
 ## Build from sources
-Prior using the perso application note you need to build required executables from provided sources
-YOu can copy this repository to youe mbedded system using any available method (USB stick, SSH transfer, SCP, etc.)
+
+In order to obtain the sources we recommend to use following command:
+```console
+git clone --recursive https://github.com/Infineon/personalize-optiga-trust-x
+```
+
+Prior using the perso application note you need to build required executables from provided sources.
+Copy this repository to your embedded system using any available method (USB stick, SSH transfer, SCP, etc.)
 ```console
 pi@raspberrypi:~ $ cd personalize-optiga-trust-x/source
 pi@raspberrypi:~/personalize-optiga-trust-x/source $ make
 ```
-During building you should observe something similar
+During the build process you should see console output as shown below
 <details> 
-  <summary> OpenSSL TLS Server output</summary>
+  <summary> Built process of mbedTLS and OPTIGA Trust X library</summary>
 
 ```console
 mkdir -p ./build
@@ -201,7 +207,7 @@ Linking ../executables/optiga_upload_crt
 ```
 </details>
 
-Your binaries are reqdy to be used and can be found in the folder executables in the root directory of your project
+Your binaries are ready to be used and can be found in the folder executables in the root directory of your project
 
 ## Usage examples for binaries
 
