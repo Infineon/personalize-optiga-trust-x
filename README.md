@@ -14,7 +14,7 @@ In this guide you may find the following steps:
 * How to generate an end-device certificate and write it back to one of available certificate slots on the device
 
 ## Hardware and Software
-For this application note you need to hav:
+For this application note you need to have:
 * Embedded Linux Platform with open GPIO and i2c interface
 * OPTIGA™ Trust X which is possile to connect to i2c lines on the Linux board
 
