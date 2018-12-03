@@ -214,7 +214,7 @@ Your binaries are ready to be used and can be found in the folder executables in
 ```console
 pi@raspberrypi:~/personalize-optiga-trust-x/executables $ ./optiga_generate_csr -f /dev/i2c-1 -o optiga.csr -i ../IO_files/config.jsn
 ```
-* `-f /dev/i2c-1` Path to the i2c device to which # Infineon's OPTIGA&trade; Trust X is connected
+* `-f /dev/i2c-1` Path to the i2c device to which # Infineon's OPTIGA&trade; Trust X is connected (Note: it might vary from paltform to platform)
 * `-o optiga.csr` Path to a file, where a generated Certificate Signing Request will be stored
 * `-i ../IO_file/config.jsn` JSON config file to define your own Distiguished Name for the End-Device Certificate
 
