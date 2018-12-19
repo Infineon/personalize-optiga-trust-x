@@ -123,7 +123,7 @@ LDLIBS  =           -lmbedtls -lmbedx509 -lmbedcrypto
 
 ifeq ($(MAKECMDGOALS), libusb)
 LDFLAGS +=          -L$(PAL_LIBUSB_DIR)/include/
-LDLIBS +=           -lusb-1.0
+LDLIBS +=           -lusb-1.0 -lm
 endif
 
 #############################################################################
