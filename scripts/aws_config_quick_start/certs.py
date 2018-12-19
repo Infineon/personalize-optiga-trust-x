@@ -5,6 +5,7 @@ import json
 import subprocess
 import os
 import sys
+import shlex
 
 class Certificate():
 
@@ -20,10 +21,9 @@ class Certificate():
         csr_fn = cert_name + '.csr'
         csrconf_fn = cert_name + '.jsn'
         try:
-            print "Trying to commands from " + exepath
-            subprocess.check_call( 
+            subprocess.check_call( shlex.split(
                 'sudo {0}/optiga_generate_csr -f {1} -p {2} -o {3} -i {4}'.format( 
-                exepath, i2cDev, privateKeyOid, csr_fn, csrconf_fn))
+                exepath, i2cDev, privateKeyOid, csr_fn, csrconf_fn)))
         except subprocess.CalledProcessError:
             print("Failed to generate a CSR using the OPTIGA(TM) Trust")
             sys.exit(1)
@@ -31,26 +31,29 @@ class Certificate():
     def __gencsr_libusb__(self, exepath, cert_name, privateKeyOid):
         csr_fn = cert_name + '.csr'
         csrconf_fn = cert_name + '.jsn'
+        print exepath
+        print cert_name
+        print privateKeyOid
         try:
-            subprocess.check_call( 
+            subprocess.check_call(shlex.split( 
                 '{0}/optiga_generate_csr -p {1} -o {2} -i {3}'.format( 
-                exepath, privateKeyOid, csr_fn, csrconf_fn))
+                exepath, privateKeyOid, csr_fn, csrconf_fn)))
         except subprocess.CalledProcessError:
             print("Failed to generate a CSR using the OPTIGA(TM) Trust")
             sys.exit(1)
     
     def __uploadcrt_linux__(self, exepath, i2cDev, certificateOid):
         try:
-            subprocess.check_call(
-            'sudo {0}/optiga_upload_crt -f {1} -c {2}.der -o {3}'.format(exepath, i2cDev, self.id, certificateOid))
+            subprocess.check_call(shlex.split(
+            'sudo {0}/optiga_upload_crt -f {1} -c {2}.der -o {3}'.format(exepath, i2cDev, self.id, certificateOid)))
         except subprocess.CalledProcessError:
             print("Failed to write back newly generated certificate into the OPTIGA(TM) Trust X")
             sys.exit(1)
 
     def __uploadcrt_libusb__(self, exepath, certificateOid):
         try:
-            subprocess.check_call(
-            '{0}/optiga_upload_crt -c {1}.der -o {2}'.format(exepath, self.id, certificateOid))
+            subprocess.check_call(shlex.split(
+            '{0}/optiga_upload_crt -c {1}.der -o {2}'.format(exepath, self.id, certificateOid)))
         except subprocess.CalledProcessError:
             print("Failed to write back newly generated certificate into the OPTIGA(TM) Trust X")
             sys.exit(1)
@@ -80,8 +83,8 @@ class Certificate():
         cert_pem_file.close()
 
         try:
-            subprocess.check_call(
-            'openssl x509 -in {0}.pem -inform PEM -out {0}.der -outform DER'.format(self.id))
+            subprocess.check_call(shlex.split(
+            'openssl x509 -in {0}.pem -inform PEM -out {0}.der -outform DER'.format(self.id)))
         except subprocess.CalledProcessError:
             print("Failed to convert PEM certificate into DER certificate")
             sys.exit(1)
