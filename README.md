@@ -1,4 +1,4 @@
-# Personalize your OPTIGA™ Trust X sample with Embedded Linux
+# Personalize your OPTIGA™ Trust X sample
 
 ## Description
 
@@ -12,11 +12,15 @@ In this guide you may find the following steps:
 * How to issue your own self-signed CA certificate with openSSL
 * How to generate a Certificate Signing Request (CSR) with OPTIGA™ Trust X and sign it with the CA
 * How to generate an end-device certificate and write it back to one of available certificate slots on the device
+* How to issue a certificate for an OPTIGA™ Trust X using CSR and your AWS IoT instance
+* How to provision/register an OPTIGA™ Trust X on your AWS IoT instance
 
 ## Hardware and Software
 For this application note you need to have:
-* Embedded Linux Platform with open GPIO and i2c interface
-* OPTIGA™ Trust X which is possile to connect to i2c lines on the Linux board
+* Either of the following:
+  * Embedded Linux Platform with open GPIO and i2c interface
+  * One of FTDI I2C Adapters availble on market
+* OPTIGA™ Trust X which has opened i2c lines
 
 ## Build from sources
 
@@ -29,8 +33,9 @@ Prior using the perso application note you need to build required executables fr
 Copy this repository to your embedded system using any available method (USB stick, SSH transfer, SCP, etc.)
 ```console
 pi@raspberrypi:~ $ cd personalize-optiga-trust-x/source
-pi@raspberrypi:~/personalize-optiga-trust-x/source $ make
+pi@raspberrypi:~/personalize-optiga-trust-x/source $ make linux|libusb
 ```
+`linux` option is required when you have your security controller directly connected to your Linux machine via GPIOs, wheras `libusb` builds executables for the setup with the FTDI-I2C option
 During the build process you should see console output as shown below
 <details> 
   <summary> Built process of mbedTLS and OPTIGA Trust X library</summary>
