@@ -31,9 +31,7 @@ class Certificate():
     def __gencsr_libusb__(self, exepath, cert_name, privateKeyOid):
         csr_fn = cert_name + '.csr'
         csrconf_fn = cert_name + '.jsn'
-        print exepath
-        print cert_name
-        print privateKeyOid
+
         try:
             subprocess.check_call(shlex.split( 
                 '{0}/optiga_generate_csr -p {1} -o {2} -i {3}'.format( 
