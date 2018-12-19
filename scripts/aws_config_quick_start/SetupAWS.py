@@ -20,15 +20,21 @@ def check_aws_configuration():
 def prereq():
     with open('configure.json') as file:
         json_text = json.load(file)
+        aws_config = json_text["aws_config"]
+        optiga_config = json_text["optiga_trust_config"]
 
-    # Create a Thing
-    thing_name = json_text['thing_name']
+    # Create a Certificate
+    cert_obj = certs.Certificate()
+    result = cert_obj.create(optiga_config['executable_path'],
+                             optiga_config['i2c_device'],
+                             optiga_config['privatekey_objectid'],
+                             optiga_config['certificate_objectid'])
+
+    # Create a Thing if doesn't exist
+    thing_name = aws_config['thing_name']
     thing_obj = thing.Thing(thing_name)
-    if not thing_obj.create():
-
-        # Create a Certificate
-        cert_obj = certs.Certificate()
-        result = cert_obj.create()
+    if not thing_obj.exists():
+        thing_obj.create()
 
         # Store certId
         cert_id = result['certificateId']
@@ -48,23 +54,25 @@ def prereq():
         os.chmod(cert_pem_file_path, 0o444)
         cert_pem_file.close()
 
-        # Create a Policy
+    # Create a Policy if doesn't exist
+    policy_obj = policy.Policy(aws_config['policy_name'])
+    if not policy_obj.exists():
         policy_document = misc.create_policy_document()
-        policy_name = thing_name + '_amazon_freertos_policy'
-        policy_obj = policy.Policy(policy_name, policy_document)
+        policy_obj.attach_rules(policy_document)
         policy_obj.create()
 
-        # Attach certificate to Thing
-        cert_obj.attach_thing(thing_name)
+    # Attach certificate to Thing
+    cert_obj.attach_thing(aws_config['thing_name'])
 
-        # Attach policy to certificate
-        cert_obj.attach_policy(policy_name)
+    # Attach policy to certificate
+    cert_obj.attach_policy(aws_config['policy_name'])
 
 def update_credential_file():
     with open('configure.json') as file:
         json_text = json.load(file)
+        aws_config = json_text["aws_config"]
 
-    thing_name = json_text['thing_name']
+    thing_name = aws_config['thing_name']
 
     # Read cert_pem from file
     cert_pem_filename = thing_name + '_cert_pem_file'
@@ -79,9 +87,10 @@ def update_credential_file():
 def delete_prereq():
     with open('configure.json') as file:
         json_text = json.load(file)
+        aws_config = json_text["aws_config"]
 
     # Delete Thing
-    thing_name = json_text['thing_name']
+    thing_name = aws_config['thing_name']
     thing_obj = thing.Thing(thing_name)
     thing_obj.delete()
 

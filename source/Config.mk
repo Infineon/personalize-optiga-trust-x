@@ -39,7 +39,6 @@ OPTIGA_SOURCES =    $(OPTIGA_CORE_DIR)/crypt/optiga_crypt.c \
 					$(OPTIGA_CORE_DIR)/cmd/CommandLib.c \
 					$(OPTIGA_CORE_DIR)/common/Logger.c \
 					$(OPTIGA_CORE_DIR)/common/Util.c \
-					$(OPTIGA_CORE_DIR)/comms/optiga_comms.c \
 					$(OPTIGA_CORE_DIR)/comms/ifx_i2c/ifx_i2c.c \
 					$(OPTIGA_CORE_DIR)/comms/ifx_i2c/ifx_i2c_config.c \
 					$(OPTIGA_CORE_DIR)/comms/ifx_i2c/ifx_i2c_data_link_layer.c \
@@ -50,20 +49,40 @@ OPTIGA_SOURCES =    $(OPTIGA_CORE_DIR)/crypt/optiga_crypt.c \
 OPTIGA_INCLUDES =  -I$(OPTIGA_CORE_DIR)/include/
 
 # Directory with the Platform Abstraction Layer (PAL) for OPTIGA(TM) Trust X
-PAL_DIR = 			$(ROOT_DIR)/optiga_trust_x/pal/linux
+PAL_LINUX_DIR = 	$(ROOT_DIR)/optiga_trust_x/pal/linux
 
 # Platform Abstraction Layer (PAL) source code files to be built
-PAL_SOURCES =  	$(PAL_DIR)/pal.c \
-					$(PAL_DIR)/pal_gpio.c \
-					$(PAL_DIR)/pal_i2c.c \
-					$(PAL_DIR)/pal_ifx_i2c_config.c \
-					$(PAL_DIR)/pal_os_event.c \
-					$(PAL_DIR)/pal_os_lock.c \
-					$(PAL_DIR)/pal_os_timer.c 
+PAL_LINUX_SOURCES = $(OPTIGA_CORE_DIR)/comms/optiga_comms.c \
+					$(PAL_LINUX_DIR)/pal.c \
+					$(PAL_LINUX_DIR)/pal_gpio.c \
+					$(PAL_LINUX_DIR)/pal_i2c.c \
+					$(PAL_LINUX_DIR)/pal_ifx_i2c_config.c \
+					$(PAL_LINUX_DIR)/pal_os_event.c \
+					$(PAL_LINUX_DIR)/pal_os_lock.c \
+					$(PAL_LINUX_DIR)/pal_os_timer.c 
 
 # Platform Abstraction Layer (PAL) header file dependencies					
-PAL_INCLUDES =  	-I$(OPTIGA_CORE_DIR)/include/pal/ \
-					-I$(PAL_DIR)/
+PAL_LINUX_INCLUDES =-I$(OPTIGA_CORE_DIR)/include/pal/ \
+					-I$(PAL_LINUX_DIR)/
+					
+# Directory with the Platform Abstraction Layer (PAL) for OPTIGA(TM) Trust X
+PAL_LIBUSB_DIR = 	$(ROOT_DIR)/optiga_trust_x/pal/libusb
+
+# Platform Abstraction Layer (PAL) source code files to be built
+PAL_LIBUSB_SOURCES =$(PAL_LIBUSB_DIR)/optiga_comms_ifx_i2c_usb.c \
+					$(PAL_LIBUSB_DIR)/pal_common.c \
+					$(PAL_LIBUSB_DIR)/pal.c \
+					$(PAL_LIBUSB_DIR)/pal_gpio.c \
+					$(PAL_LIBUSB_DIR)/pal_i2c.c \
+					$(PAL_LIBUSB_DIR)/pal_ifx_usb_config.c \
+					$(PAL_LIBUSB_DIR)/pal_os_event.c \
+					$(PAL_LIBUSB_DIR)/pal_os_lock.c \
+					$(PAL_LIBUSB_DIR)/pal_os_timer.c
+					#$(PAL_LIBUSB_DIR)/usb_lib_loader.c
+
+# Platform Abstraction Layer (PAL) header file dependencies					
+PAL_LIBUSB_INCLUDES =-I$(OPTIGA_CORE_DIR)/include/pal/ \
+					 -I$(PAL_LIBUSB_DIR)/include/
 					
 ##############################################################
 
@@ -76,7 +95,7 @@ JSON_SOURCES =		$(JSON_DIR)/cJSON.c \
 					
 # JSON parser includes
 JSON_INCLUDES =		-I$(JSON_DIR)
-					
+
 # Directory with the Generate CSR Application
 GEN_CSR_DIR = 		$(ROOT_DIR)
 
@@ -100,22 +119,26 @@ UPLOAD_CRT_INCLUDES=-I$(UPLOAD_CRT_DIR) \
 CCFLAGS =           -g -Wall -DPAL_OS_HAS_EVENT_INIT
 
 LDFLAGS =           -L$(ROOT_DIR)/mbedtls-2.6.0/library/ 
-LDLIBS  =           -lmbedtls -lmbedx509 -lmbedcrypto -lrt
+LDLIBS  =           -lmbedtls -lmbedx509 -lmbedcrypto
+
+ifeq ($(MAKECMDGOALS), libusb)
+LDFLAGS +=          -L$(PAL_LIBUSB_DIR)/include/
+LDLIBS +=           -lusb-1.0
+endif
 
 #############################################################################
 
 # Common source code to be built
 SOURCES := 			$(OPTIGA_SOURCES)  \
-					$(PAL_SOURCES)     \
 					$(JSON_SOURCES)
 
 # Common header file dependencies
 INCLUDES := 		$(OPTIGA_INCLUDES) \
-					$(PAL_INCLUDES)    \
 					$(JSON_INCLUDES)
 
 #Commands, compiler configuration
 #CC = C:\SysGCC\Raspberry\bin\arm-linux-gnueabihf-gcc.exe 
 CLEAN = rm
 MKDIR = mkdir
+COPY = cp
 

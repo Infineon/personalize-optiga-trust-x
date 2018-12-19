@@ -60,15 +60,13 @@
 /* JSON parser includes */
 #include "JSON_parser.h"
 
-/**
- * Callback when optiga_util_xxxx operation is completed asynchronously
- */
-optiga_comms_t optiga_comms = {(void*)&ifx_i2c_context_0,NULL,NULL, OPTIGA_COMMS_SUCCESS};
-uint16_t POID = 0;
-char * i2c_if;
 
 extern void pal_gpio_init(void);
 extern void pal_gpio_deinit(void);
+extern pal_status_t pal_init(void);
+extern ifx_i2c_context_t ifx_i2c_context_1;
+optiga_comms_t optiga_comms = {(void*)&ifx_i2c_context_1, NULL,NULL, OPTIGA_COMMS_SUCCESS};
+uint16_t POID = 0;
 
 int __optiga_sign_wrap( void *ctx, mbedtls_md_type_t md_alg,
                       const unsigned char *hash, size_t hash_len,
@@ -85,7 +83,7 @@ int __optiga_sign_wrap( void *ctx, mbedtls_md_type_t md_alg,
 	if (optiga_key_id == 0)
 		optiga_key_id = OPTIGA_KEY_STORE_ID_E0F1;
 	
-	status = optiga_crypt_ecdsa_sign(hash, hash_len, optiga_key_id, der_signature, &ds_len);
+	status = optiga_crypt_ecdsa_sign((uint8_t*)hash, hash_len, optiga_key_id, der_signature, &ds_len);
 	if (OPTIGA_LIB_SUCCESS != status)
     {
         //Key pair generation failed
@@ -99,7 +97,7 @@ int __optiga_sign_wrap( void *ctx, mbedtls_md_type_t md_alg,
 
     for(int i = 0; i < *sig_len; i++ )
         mbedtls_printf("%c%c", "0123456789ABCDEF" [sig[i] / 16], "0123456789ABCDEF" [sig[i] % 16] );
-    mbedtls_printf( " Size %lu\n", *sig_len);
+    mbedtls_printf( " Size %zu\n", *sig_len);
 	
 	return 0;
 }
@@ -155,6 +153,8 @@ static int32_t __optiga_init(void)
 	{
 		pal_gpio_init();
 		pal_os_event_init();
+		if (pal_init() != PAL_STATUS_SUCCESS)
+			break;
 
 		status = optiga_util_open_application(&optiga_comms);
 		if(OPTIGA_LIB_SUCCESS != status)
@@ -248,8 +248,7 @@ static void __mbedtls_dump_pubkey( const char *title, mbedtls_ecdsa_context *key
 void usage(void){
   fprintf(stderr,
       " usage:\n"
-      "    ./optiga_generate_csr -f i2c_path -o file -i json_file [-p  cert_oid] [-r perso_string]\n"
-      "       -f  i2c_path:         Path to i2c intreface; e.g. -f /dev/i2c-0 \n" 
+      "    ./optiga_generate_csr -o file -i json_file [-p  cert_oid] [-r perso_string]\n"
       "       -i  json_file:        Path to input-file. It contains information about the certificate requestor.\n"
       "       -o  file:             Path to output-file. If file does not exist, it will be automatically created.\n"
       "       -p  cert_oid:         Select Object ID to store new private key within OPTIGA(TM) Trust X.\n"
@@ -288,21 +287,18 @@ int32_t main(int argc, char ** argv)
 	int c;
 
 	/* Parse arguments of function call */
-	if(argc < 7) {
+	if(argc < 5) {
 		usage();
 		return EXIT_FAILURE;
 	}	
 	
-	while((c = getopt (argc, argv, "i:o:f:p:r")) != -1) {
+	while((c = getopt (argc, argv, "i:o:p:r")) != -1) {
 		switch(c) {
 		case 'i':
 			file_str = optarg;
 			break;
 		case 'o':
 			output_file = optarg;
-			break;
-		case 'f':
-			i2c_if = optarg;
 			break;
 		case 'p':
 			output_file = optarg;
@@ -330,9 +326,6 @@ int32_t main(int argc, char ** argv)
 				fprintf(stderr, "Option -%i requires an argument. \n", optopt);
 			}
 			else if(optopt == 'o') {
-				fprintf(stderr, "Option -%i requires an argument. \n", optopt);
-			}
-			else if(optopt == 'f') {
 				fprintf(stderr, "Option -%i requires an argument. \n", optopt);
 			}
 			else if (isprint(optopt)) {

@@ -58,10 +58,13 @@ static int __read_file (char *path, uint8_t **buffer, uint16_t *file_length);
 static void __print_hex (uint8_t *t);
 static void __print_str (uint8_t *t);
 static uint8_t * __append_tags (uint8_t *buffer, uint16_t length);
+
 extern void pal_gpio_init(void);
 extern void pal_gpio_deinit(void);
+extern pal_status_t pal_init(void);
+extern ifx_i2c_context_t ifx_i2c_context_1;
 
-optiga_comms_t optiga_comms = {(void*)&ifx_i2c_context_0,NULL,NULL, OPTIGA_COMMS_SUCCESS};
+optiga_comms_t optiga_comms = {(void*)&ifx_i2c_context_1, NULL,NULL, OPTIGA_COMMS_SUCCESS};
 uint16_t COID = 0xE0E1;
 
 char * i2c_if;
@@ -223,6 +226,8 @@ static int32_t __optiga_init(void)
 	{
 		pal_gpio_init();
 		pal_os_event_init();
+		if (pal_init() != PAL_STATUS_SUCCESS)
+			break;
 
 		status = optiga_util_open_application(&optiga_comms);
 		if(OPTIGA_LIB_SUCCESS != status)

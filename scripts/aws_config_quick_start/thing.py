@@ -4,10 +4,15 @@ import boto3
 import json
 
 class Thing():
-    def __init__(self, name):
+    def __init__(self, thing_name):
         self.client = boto3.client('iot')
-        self.name = name
+        self.name = thing_name
         self.arn = ''
+        list_of_things = self.client.list_things()['things']
+        for thing in list_of_things:
+            if thing['thingName'] == thing_name:
+                self.name = thing_name
+                self.arn = thing['thingArn']
 
     def create(self):
         assert self.exists() == False, "Thing already exists"

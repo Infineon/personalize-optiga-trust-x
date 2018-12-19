@@ -2,7 +2,9 @@
 
 import boto3
 import json
+import subprocess
 import os
+import sys
 
 class Certificate():
 
@@ -14,22 +16,58 @@ class Certificate():
             result = self.client.describe_certificate(certificateId=self.id)
             self.arn = result['certificateDescription']['certificateArn']
 
-    def create(self, i2cDev = '/dev/i2c-1', privateKeyOid = '0xE0F1', certificateOid = '0xE0E1'):
-        cert_prefix = 'aws_optiga_cert'
-        csr_fn = cert_prefix + '.csr'
-        
-        assert self.exists() == False, "Cert already exists"
-        
+    def __gencsr_linux__(self, exepath, cert_name, i2cDev, privateKeyOid):
+        csr_fn = cert_name + '.csr'
+        csrconf_fn = cert_name + '.jsn'
         try:
-            os.system('sudo ../../executables/optiga_generate_csr' +
-                        ' -f' + i2cDev + 
-                        ' -p ' + privateKeyOid +
-                        ' -o ' + csr_fn +
-                        ' -i ./aws_cert_config.jsn')
-        except:
-            print("Failed to generate a CSR with OPTIGA(TM) Trust X")
+            print "Trying to commands from " + exepath
+            subprocess.check_call( 
+                'sudo {0}/optiga_generate_csr -f {1} -p {2} -o {3} -i {4}'.format( 
+                exepath, i2cDev, privateKeyOid, csr_fn, csrconf_fn))
+        except subprocess.CalledProcessError:
+            print("Failed to generate a CSR using the OPTIGA(TM) Trust")
             sys.exit(1)
+
+    def __gencsr_libusb__(self, exepath, cert_name, privateKeyOid):
+        csr_fn = cert_name + '.csr'
+        csrconf_fn = cert_name + '.jsn'
+        try:
+            subprocess.check_call( 
+                '{0}/optiga_generate_csr -p {1} -o {2} -i {3}'.format( 
+                exepath, privateKeyOid, csr_fn, csrconf_fn))
+        except subprocess.CalledProcessError:
+            print("Failed to generate a CSR using the OPTIGA(TM) Trust")
+            sys.exit(1)
+    
+    def __uploadcrt_linux__(self, exepath, i2cDev, certificateOid):
+        try:
+            subprocess.check_call(
+            'sudo {0}/optiga_upload_crt -f {1} -c {2}.der -o {3}'.format(exepath, i2cDev, self.id, certificateOid))
+        except subprocess.CalledProcessError:
+            print("Failed to write back newly generated certificate into the OPTIGA(TM) Trust X")
+            sys.exit(1)
+
+    def __uploadcrt_libusb__(self, exepath, certificateOid):
+        try:
+            subprocess.check_call(
+            '{0}/optiga_upload_crt -c {1}.der -o {2}'.format(exepath, self.id, certificateOid))
+        except subprocess.CalledProcessError:
+            print("Failed to write back newly generated certificate into the OPTIGA(TM) Trust X")
+            sys.exit(1)
+
+    def create(self, exepath = '', i2cDev = '', privateKeyOid = '0xE0F1', certificateOid = '0xE0E1'):
+        cert_name = 'aws_optiga_cert'
+        csr_fn = cert_name + '.csr'
+        csrconf_fn = cert_name + '.jsn'
         
+        assert exepath != '', "Please specify a path to OPTIGA(TM) executables; e.g. ../../executables/linux_win32_x86"
+        assert self.exists() == False, "Cert already exists"
+
+        if i2cDev == '':
+            self.__gencsr_libusb__(exepath, cert_name, privateKeyOid)
+        else:
+            self.__gencsr_linux__(exepath, cert_name, i2cDev, privateKeyOid)
+
         with open(csr_fn, 'r') as myfile:
             csr = myfile.read()
         myfile.close()
@@ -42,16 +80,16 @@ class Certificate():
         cert_pem_file.close()
 
         try:
-            os.system('openssl x509' + 
-                        ' --in ' + self.id + '.pem' + ' --inform PEM' + 
-                        ' --out ' + self.id + '.der' + ' --outform DER')
-            os.system('sudo ../../executables/optiga_upload_crt' + 
-                        ' -f' + i2cDev +
-                        ' -c ' + self.id + '.der' +
-                        ' -o ' + certificateOid)
-        except:
-            print("Failed to write back newly generated certificate into the OPTIGA(TM) Trust X")
+            subprocess.check_call(
+            'openssl x509 -in {0}.pem -inform PEM -out {0}.der -outform DER'.format(self.id))
+        except subprocess.CalledProcessError:
+            print("Failed to convert PEM certificate into DER certificate")
             sys.exit(1)
+            
+        if i2cDev == '':
+            self.__uploadcrt_libusb__(exepath, certificateOid)
+        else:
+            self.__uploadcrt_libusb__(exepath, i2cDev, certificateOid)
         
         # Clean temp files
         os.remove(csr_fn)

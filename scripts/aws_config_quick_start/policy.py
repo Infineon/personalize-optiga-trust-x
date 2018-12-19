@@ -15,6 +15,9 @@ class Policy():
         self.client.create_policy(policyName=self.name,
             policyDocument=self.policy)
 
+    def attach_rules(self, policy):
+        self.policy = policy
+
     def delete(self):
         assert self.exists() == True, "Policy does not exist, cannot be deleted"
         self.client.delete_policy(policyName=self.name)
