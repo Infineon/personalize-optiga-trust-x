@@ -68,6 +68,8 @@ extern ifx_i2c_context_t ifx_i2c_context_1;
 optiga_comms_t optiga_comms = {(void*)&ifx_i2c_context_1, NULL,NULL, OPTIGA_COMMS_SUCCESS};
 uint16_t POID = 0;
 
+char * i2c_if;
+
 int __optiga_sign_wrap( void *ctx, mbedtls_md_type_t md_alg,
                       const unsigned char *hash, size_t hash_len,
                       unsigned char *sig, size_t *sig_len,
@@ -248,9 +250,10 @@ static void __mbedtls_dump_pubkey( const char *title, mbedtls_ecdsa_context *key
 void usage(void){
   fprintf(stderr,
       " usage:\n"
-      "    ./optiga_generate_csr -o file -i json_file [-p  cert_oid] [-r perso_string]\n"
+      "    ./optiga_generate_csr -o file -i json_file [-f  i2c_path] [-p  cert_oid] [-r perso_string]\n"
       "       -i  json_file:        Path to input-file. It contains information about the certificate requestor.\n"
       "       -o  file:             Path to output-file. If file does not exist, it will be automatically created.\n"
+      "       -f  i2c_path          Path to i2c intreface; e.g. -f /dev/i2c-0 \n" 
       "       -p  cert_oid:         Select Object ID to store new private key within OPTIGA(TM) Trust X.\n"
       "                             Can be 0xE0F1, 0xE0F2, 0xE0F3. 0xE0F1 is used by default\n"
       "       -r  perso_string:     Add you personalisation information to randomise a random number generator.\n"
@@ -294,6 +297,9 @@ int32_t main(int argc, char ** argv)
 	
 	while((c = getopt (argc, argv, "i:o:p:r")) != -1) {
 		switch(c) {
+		case 'f':
+			i2c_if = optarg;
+			break;
 		case 'i':
 			file_str = optarg;
 			break;
