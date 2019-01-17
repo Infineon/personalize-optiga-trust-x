@@ -106,7 +106,7 @@ $(BUILD_DIR)/%.o: %.c
 
 $(BUILD_DIR)/optiga_generate_csr: $(OPTIGA_CORE_OBJECTS) $(PAL_OBJECTS) $(GEN_CSR_OBJECTS)
 	@echo Linking $@
-	@$(CC) $^ $(LDFLAGS) $(LDLIBS) -lrt -o $@
+	@$(CC) $^ $(LDFLAGS) $(LDLIBS) -o $@
 	
 $(BUILD_DIR)/optiga_upload_crt: $(OPTIGA_CORE_OBJECTS) $(PAL_OBJECTS) $(UPLOAD_CRT_OBJECTS)
 	@echo Linking $@
