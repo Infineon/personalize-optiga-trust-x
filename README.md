@@ -33,9 +33,9 @@ Prior using the perso application note you need to build required executables fr
 Copy this repository to your embedded system using any available method (USB stick, SSH transfer, SCP, etc.)
 ```console
 pi@raspberrypi:~ $ cd personalize-optiga-trust-x/source
-pi@raspberrypi:~/personalize-optiga-trust-x/source $ make linux|libusb
+pi@raspberrypi:~/personalize-optiga-trust-x/source $ make rpi3|libusb
 ```
-`linux` option is required when you have your security controller directly connected to your Linux machine via GPIOs, wheras `libusb` builds executables for the setup with the FTDI-I2C option
+`rpi3` option is required when you have your security controller directly connected to your RPi3 machine via GPIOs, wheras `libusb` builds executables for the setup with the FTDI-I2C option
 During the build process you should see console output as shown below
 <details> 
   <summary> Built process of mbedTLS and OPTIGA Trust X library</summary>
