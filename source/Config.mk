@@ -56,7 +56,6 @@ PAL_LINUX_SOURCES =  $(OPTIGA_CORE_DIR)/comms/optiga_comms.c \
                      $(PAL_LINUX_DIR)/pal.c \
                      $(PAL_LINUX_DIR)/pal_gpio.c \
                      $(PAL_LINUX_DIR)/pal_i2c.c \
-                     $(PAL_LINUX_DIR)/pal_ifx_i2c_config.c \
                      $(PAL_LINUX_DIR)/pal_os_event.c \
                      $(PAL_LINUX_DIR)/pal_os_lock.c \
                      $(PAL_LINUX_DIR)/pal_os_timer.c 
@@ -74,7 +73,7 @@ PAL_LIBUSB_SOURCES = $(PAL_LIBUSB_DIR)/optiga_comms_ifx_i2c_usb.c \
                      $(PAL_LIBUSB_DIR)/pal.c \
                      $(PAL_LIBUSB_DIR)/pal_gpio.c \
                      $(PAL_LIBUSB_DIR)/pal_i2c.c \
-                     $(PAL_LIBUSB_DIR)/pal_ifx_usb_config.c \
+					 $(PAL_LIBUSB_DIR)/pal_ifx_usb_config.c \
                      $(PAL_LIBUSB_DIR)/pal_os_event.c \
                      $(PAL_LIBUSB_DIR)/pal_os_lock.c \
                      $(PAL_LIBUSB_DIR)/pal_os_timer.c
@@ -126,8 +125,13 @@ CCFLAGS +=          -DUSE_LIBUSB_PAL
 LDFLAGS +=          -L$(PAL_LIBUSB_DIR)/include/
 LDLIBS +=           -lusb-1.0 -lm
 endif
-ifeq ($(MAKECMDGOALS), linux)
+ifeq ($(MAKECMDGOALS), rpi3)
 LDLIBS +=           -lrt
+PAL_LINUX_SOURCES+= $(PAL_LINUX_DIR)/target/rpi3/pal_ifx_i2c_config.c
+endif
+ifeq ($(MAKECMDGOALS), ultra96)
+LDLIBS +=           -lrt
+PAL_LINUX_SOURCES+= $(PAL_LINUX_DIR)/target/ultra96/pal_ifx_i2c_config.c
 endif
 
 #############################################################################

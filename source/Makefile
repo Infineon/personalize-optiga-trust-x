@@ -51,14 +51,14 @@ else
 		OSFLAG = osx
 	endif
 	
-	UNAME_P := $(shell uname -p)
-	ifeq ($(UNAME_P),x86_64)
+	UNAME_M := $(shell uname -m)
+	ifeq ($(UNAME_M),x86_64)
 		OSARCH = x86_64
 	endif
-		ifneq ($(filter %86,$(UNAME_P)),)
+		ifneq ($(filter %86,$(UNAME_M)),)
 			OSARCH = x86
 		endif
-	ifneq ($(filter arm%,$(UNAME_P)),)
+	ifneq ($(filter arm%,$(UNAME_M)),)
 		OSARCH = arm
 	endif
 endif
@@ -76,11 +76,11 @@ endif
 GEN_CSR_OBJECTS =      $(patsubst %.c, $(BUILD_DIR)/%.o, $(GEN_CSR_SOURCES))
 UPLOAD_CRT_OBJECTS =   $(patsubst %.c, $(BUILD_DIR)/%.o, $(UPLOAD_CRT_SOURCES))
 
-.PHONY: mkdirs all clean linux libusb cp_lib
+.PHONY: mkdirs all clean rpi3 ultra96 libusb cp_lib
 
 all: libusb
 
-linux:  mkdirs mbedtls $(BUILD_DIR)/optiga_generate_csr $(BUILD_DIR)/optiga_upload_crt cp_lib
+rpi3 ultra96:  mkdirs mbedtls $(BUILD_DIR)/optiga_generate_csr $(BUILD_DIR)/optiga_upload_crt cp_lib
 libusb: mkdirs mbedtls $(BUILD_DIR)/optiga_generate_csr $(BUILD_DIR)/optiga_upload_crt cp_lib
 
 #Make application note

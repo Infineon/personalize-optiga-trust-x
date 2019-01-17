@@ -1,0 +1,12 @@
+{
+    "aws_config" : {
+        "thing_name": "thing_name",
+        "policy_name": "policy_name"
+    },
+    "optiga_trust_config": {
+        "certificate_objectid": "0xE0E1",
+        "privatekey_objectid": "0xE0F1",
+        "executable_path": "/home/pi/git/personalize-optiga-trust-x/executables/rpi3_linux_arm",
+        "i2c_device": "/dev/i2c-1"
+    }
+}

@@ -90,7 +90,7 @@ class Certificate():
         if i2cDev == '':
             self.__uploadcrt_libusb__(exepath, certificateOid)
         else:
-            self.__uploadcrt_libusb__(exepath, i2cDev, certificateOid)
+            self.__uploadcrt_linux__(exepath, i2cDev, certificateOid)
         
         # Clean temp files
         os.remove(csr_fn)
