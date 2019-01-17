@@ -122,6 +122,7 @@ LDFLAGS =           -L$(ROOT_DIR)/mbedtls-2.6.0/library/
 LDLIBS  =           -lmbedtls -lmbedx509 -lmbedcrypto
 
 ifeq ($(MAKECMDGOALS), libusb)
+CCFLAGS +=          -DUSE_LIBUSB_PAL
 LDFLAGS +=          -L$(PAL_LIBUSB_DIR)/include/
 LDLIBS +=           -lusb-1.0 -lm
 endif
