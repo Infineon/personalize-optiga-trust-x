@@ -64,8 +64,16 @@
 extern void pal_gpio_init(void);
 extern void pal_gpio_deinit(void);
 extern pal_status_t pal_init(void);
+
+#ifdef USE_LIBUSB_PAL
 extern ifx_i2c_context_t ifx_i2c_context_1;
-optiga_comms_t optiga_comms = {(void*)&ifx_i2c_context_1, NULL,NULL, OPTIGA_COMMS_SUCCESS};
+#define IFX_I2C_CONTEXT ifx_i2c_context_1
+#else
+extern ifx_i2c_context_t ifx_i2c_context_0;
+#define IFX_I2C_CONTEXT ifx_i2c_context_0
+#endif
+
+optiga_comms_t optiga_comms = {(void*)&IFX_I2C_CONTEXT, NULL,NULL, OPTIGA_COMMS_SUCCESS};
 uint16_t POID = 0;
 
 char * i2c_if;
@@ -87,32 +95,32 @@ int __optiga_sign_wrap( void *ctx, mbedtls_md_type_t md_alg,
 	
 	status = optiga_crypt_ecdsa_sign((uint8_t*)hash, hash_len, optiga_key_id, der_signature, &ds_len);
 	if (OPTIGA_LIB_SUCCESS != status)
-    {
-        //Key pair generation failed
-        return 1;
-    }
+	{
+        	//Key pair generation failed
+        	return 1;
+	}
 	
 	sig[0] = 0x30;
-    sig[1] = ds_len;
+	sig[1] = ds_len;
 	memcpy(sig + 2, der_signature, ds_len);
-    *sig_len = 2 + ds_len;
+	*sig_len = 2 + ds_len;
 
-    for(int i = 0; i < *sig_len; i++ )
-        mbedtls_printf("%c%c", "0123456789ABCDEF" [sig[i] / 16], "0123456789ABCDEF" [sig[i] % 16] );
-    mbedtls_printf( " Size %zu\n", *sig_len);
+	for(int i = 0; i < *sig_len; i++ )
+        	mbedtls_printf("%c%c", "0123456789ABCDEF" [sig[i] / 16], "0123456789ABCDEF" [sig[i] % 16] );
+	mbedtls_printf( " Size %zu\n", *sig_len);
 	
 	return 0;
 }
 
 const mbedtls_pk_info_t mbedtls_ecdsa_optiga_info = {
 	MBEDTLS_PK_ECKEY,
-    "ECDSA",
+	"ECDSA",
 	NULL,
 	NULL,
 	NULL,
 	__optiga_sign_wrap,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -123,28 +131,28 @@ int __write_csr( mbedtls_x509write_csr *req, const char *output_file,
                                int (*f_rng)(void *, unsigned char *, size_t),
                                void *p_rng )
 {
-    int ret;
-    FILE *f;
-    unsigned char output_buf[4096];
-    size_t len = 0;
+	int ret;
+	FILE *f;
+	unsigned char output_buf[4096];
+	size_t len = 0;
 
-    memset( output_buf, 0, 4096 );
-    if( ( ret = mbedtls_x509write_csr_pem( req, output_buf, 4096, f_rng, p_rng ) ) < 0 )
-        return( ret );
+	memset( output_buf, 0, 4096 );
+	if( ( ret = mbedtls_x509write_csr_pem( req, output_buf, 4096, f_rng, p_rng ) ) < 0 )
+		return( ret );
 
-    len = strlen( (char *) output_buf );
+	len = strlen( (char *) output_buf );
 
-    if( ( f = fopen( output_file, "w+" ) ) == NULL )
-        return( -1 );
+	if( ( f = fopen( output_file, "w+" ) ) == NULL )
+		return( -1 );
 
-    if( fwrite( output_buf, 1, len, f ) != len )
-    {
-        fclose( f );
-        return( -1 );
-    }
+	if( fwrite( output_buf, 1, len, f ) != len )
+	{
+		fclose( f );
+		return( -1 );
+	}
 
-    fclose( f );
-    return( 0 );
+	fclose( f );
+	return( 0 );
 }
 
 static int32_t __optiga_init(void)
@@ -239,9 +247,9 @@ static void __mbedtls_dump_pubkey( const char *title, mbedtls_ecdsa_context *key
     }
 
 	mbedtls_printf( "%s", title );
-    for( i = 0; i < len; i++ )
-        mbedtls_printf("%c%c", "0123456789ABCDEF" [buf[i] / 16], "0123456789ABCDEF" [buf[i] % 16] );
-    mbedtls_printf( "\n" );
+	for( i = 0; i < len; i++ )
+		mbedtls_printf("%c%c", "0123456789ABCDEF" [buf[i] / 16], "0123456789ABCDEF" [buf[i] % 16] );
+	mbedtls_printf( "\n" );
 }
 
 
@@ -295,7 +303,7 @@ int32_t main(int argc, char ** argv)
 		return EXIT_FAILURE;
 	}	
 	
-	while((c = getopt (argc, argv, "i:o:p:r")) != -1) {
+	while((c = getopt (argc, argv, "i:f:o:p:r")) != -1) {
 		switch(c) {
 		case 'f':
 			i2c_if = optarg;
