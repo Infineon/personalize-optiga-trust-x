@@ -62,9 +62,16 @@ static uint8_t * __append_tags (uint8_t *buffer, uint16_t length);
 extern void pal_gpio_init(void);
 extern void pal_gpio_deinit(void);
 extern pal_status_t pal_init(void);
-extern ifx_i2c_context_t ifx_i2c_context_1;
 
-optiga_comms_t optiga_comms = {(void*)&ifx_i2c_context_1, NULL,NULL, OPTIGA_COMMS_SUCCESS};
+#ifdef USE_LIBUSB_PAL
+extern ifx_i2c_context_t ifx_i2c_context_1;
+#define IFX_I2C_CONTEXT ifx_i2c_context_1
+#else
+extern ifx_i2c_context_t ifx_i2c_context_0;
+#define IFX_I2C_CONTEXT ifx_i2c_context_0
+#endif
+
+optiga_comms_t optiga_comms = {(void*)&IFX_I2C_CONTEXT, NULL,NULL, OPTIGA_COMMS_SUCCESS};
 uint16_t COID = 0xE0E1;
 
 char * i2c_if;
