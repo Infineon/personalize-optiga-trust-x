@@ -63,18 +63,18 @@ else
 	endif
 endif
 
-BIN_DIR =		        $(ROOT_DIR)/../executables/$(MAKECMDGOALS)_$(OSFLAG)_$(OSARCH)
-BUILD_DIR =				$(ROOT_DIR)/build
+BIN_DIR =              $(ROOT_DIR)/../executables/$(MAKECMDGOALS)_$(OSFLAG)_$(OSARCH)
+BUILD_DIR =            $(ROOT_DIR)/build
 
-OPTIGA_CORE_OBJECTS =	$(patsubst %.c, $(BUILD_DIR)/%.o, $(SOURCES))
+OPTIGA_CORE_OBJECTS =  $(patsubst %.c, $(BUILD_DIR)/%.o, $(SOURCES))
 ifeq ($(MAKECMDGOALS), libusb)
-PAL_OBJECTS =	        $(patsubst %.c, $(BUILD_DIR)/%.o, $(PAL_LIBUSB_SOURCES))
+PAL_OBJECTS =          $(patsubst %.c, $(BUILD_DIR)/%.o, $(PAL_LIBUSB_SOURCES))
 else
-PAL_OBJECTS =		    $(patsubst %.c, $(BUILD_DIR)/%.o, $(PAL_LINUX_SOURCES))
+PAL_OBJECTS =          $(patsubst %.c, $(BUILD_DIR)/%.o, $(PAL_LINUX_SOURCES))
 endif
 
-GEN_CSR_OBJECTS =		$(patsubst %.c, $(BUILD_DIR)/%.o, $(GEN_CSR_SOURCES))
-UPLOAD_CRT_OBJECTS =	$(patsubst %.c, $(BUILD_DIR)/%.o, $(UPLOAD_CRT_SOURCES))
+GEN_CSR_OBJECTS =      $(patsubst %.c, $(BUILD_DIR)/%.o, $(GEN_CSR_SOURCES))
+UPLOAD_CRT_OBJECTS =   $(patsubst %.c, $(BUILD_DIR)/%.o, $(UPLOAD_CRT_SOURCES))
 
 .PHONY: mkdirs all clean linux libusb cp_lib
 
