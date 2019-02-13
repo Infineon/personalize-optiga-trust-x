@@ -262,7 +262,7 @@ void usage(void){
       "       -i  json_file:        Path to input-file. It contains information about the certificate requestor.\n"
       "       -o  file:             Path to output-file. If file does not exist, it will be automatically created.\n"
       "       -f  i2c_path          Path to i2c intreface; e.g. -f /dev/i2c-0 \n" 
-      "       -p  cert_oid:         Select Object ID to store new private key within OPTIGA(TM) Trust X.\n"
+      "       -p  private_key_oid:  Select an Object ID to store a new private key within OPTIGA(TM) Trust X.\n"
       "                             Can be 0xE0F1, 0xE0F2, 0xE0F3. 0xE0F1 is used by default\n"
       "       -r  perso_string:     Add you personalisation information to randomise a random number generator.\n"
       "                             All strings followed after 16 characters are silently ignored \n"\
@@ -315,7 +315,6 @@ int32_t main(int argc, char ** argv)
 			output_file = optarg;
 			break;
 		case 'p':
-			output_file = optarg;
 			if (strcmp(optarg, "0xE0F1") == 0) {
 				POID = 0xE0F1;
 			} else if (strcmp(optarg, "0xE0F2") == 0) {
