@@ -22,6 +22,28 @@ For this application note you need to have:
   * One of FTDI I2C Adapters availble on market
 * OPTIGA™ Trust X which has opened i2c lines
 
+* You can personalize your OPTIGA™ Trust Shield 2Go either via a direct communication to i2c interface on any embedded linux board: e.g. Raspberry Pi3 or via an OPTIGA™ Trust Perso Shield(link pending)
+  * **via the direct I<sup>2</sup>C interface**
+    * An example connection with OPTIGA™ Trust X Security Shield 2Go and RPi3 is below. Note: This setup is valid, if you want to provision the device using a direct i2c connection. Alternative you can use an FTDI USB/i2c converter for this.
+![](https://github.com/Infineon/Assets/blob/master/Pictures/optiga_trust_x_rpi3_setup.jpg)
+
+  * **via the OPTIGA™ Trust Perso Shield(link pending)**
+    * In this case no special actions are required except for installation of the FTDI/libusb drivers
+    * Windows
+      * FTDI D2XX Direct [Drivers](https://www.ftdichip.com/Drivers/D2XX.htm)
+      * Unplug and plugin your device
+    * Linux; e.g. Debian based
+      * `apt-get install libusb-1.0-0-dev libusb-1.0-0`
+* AWS related settings:
+  * Install Python 2.7.10 or later
+  * Make sure the AWS CLI is installed on your system. For more information, see [Installing the AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/installing.html)
+  * Run `aws configure` to configure the AWS CLI. For more information, see [Configuring the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html)
+  * Use the following command to install the boto3 Python module: `$  pip install boto3`
+* Install [MSYS2](https://www.msys2.org/)
+  * Install Git client by executing the `pacman -S git git-gui` command in the MSYS2 environment
+  * _**Note: We recommend to use the 32bit version of the MSYS2 launcher, i.e. MSYS2 MinGW 32-bit**_ 
+
+
 ## Build from sources
 
 In order to obtain the sources we recommend to use following command:
