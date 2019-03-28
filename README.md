@@ -217,11 +217,11 @@ Your binaries are ready to be used and can be found in the folder executables in
 ## Usage examples for binaries
 
 ```console
-pi@raspberrypi:~/personalize-optiga-trust-x/executables $ ./optiga_generate_csr -f /dev/i2c-1 -o optiga.csr -i ../IO_files/config.jsn
+pi@raspberrypi:~/personalize-optiga-trust-x/executables/rpi3_linux_arm $ ./optiga_generate_csr -f /dev/i2c-1 -o optiga.csr -i ../../IO_files/config.jsn
 ```
 * `-f /dev/i2c-1` Path to the i2c device to which # Infineon's OPTIGA&trade; Trust X is connected (Note: it might vary from paltform to platform)
 * `-o optiga.csr` Path to a file, where a generated Certificate Signing Request will be stored
-* `-i ../IO_file/config.jsn` JSON config file to define your own Distiguished Name for the End-Device Certificate
+* `-i ../../IO_file/config.jsn` JSON config file to define your own Distiguished Name for the End-Device Certificate
 
 Example `config.jsn`:
 
@@ -234,19 +234,20 @@ Example `config.jsn`:
 }
 ```
 
-```console
-pi@raspberrypi:~/personalize-optiga-trust-x/executables $ ./optiga_upload_crt -f /dev/i2c-1 -c certificate_in_der.der -o 0xE0E1
-```
-* `-f /dev/i2c-1` Path to the i2c device to which # Infineon's OPTIGA&trade; Trust X is connected
-* `-c certificate_in_der.der` DER encoded certificate which you want to upload to the device
-* `-0 0xE0E1` Optional parameter which defines in which Obejct ID to write the given certificate
-
 In order to convert PEM encoded certificate into DER encoded certificate you can use the following command
 
 ```console
 pi@raspberrypi:~/personalize-optiga-trust-x/executables $ openssl x509 -in certificate_in_pem.pem -inform PEM -out certificate_in_der.der -outform DER
 
 ```
+
+```console
+pi@raspberrypi:~/personalize-optiga-trust-x/executables/rpi3_linux_arm $ ./optiga_upload_crt -f /dev/i2c-1 -c certificate_in_der.der -o 0xE0E1
+```
+* `-f /dev/i2c-1` Path to the i2c device to which # Infineon's OPTIGA&trade; Trust X is connected
+* `-c certificate_in_der.der` DER encoded certificate which you want to upload to the device
+* `-0 0xE0E1` Optional parameter which defines in which Obejct ID to write the given certificate
+
 
 ## Issue an X.509 certificate
 
