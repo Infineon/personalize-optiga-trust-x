@@ -39,12 +39,12 @@ For this application note you need to have:
   * Make sure the AWS CLI is installed on your system. For more information, see [Installing the AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/installing.html)
   * Run `aws configure` to configure the AWS CLI. For more information, see [Configuring the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html)
   * Use the following command to install the boto3 Python module: `$  pip install boto3`
-* Install [MSYS2](https://www.msys2.org/)
+* [Optional] Install [MSYS2](https://www.msys2.org/)
   * Install Git client by executing the `pacman -S git git-gui` command in the MSYS2 environment
   * _**Note: We recommend to use the 32bit version of the MSYS2 launcher, i.e. MSYS2 MinGW 32-bit**_ 
 
 
-## Build from sources
+## [Optional] Build from sources
 
 In order to obtain the sources we recommend to use following command:
 ```console
