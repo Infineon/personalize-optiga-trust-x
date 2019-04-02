@@ -47,9 +47,12 @@
 #include "optiga/ifx_i2c/ifx_i2c_config.h"
 
 #include "mbedtls/x509_crt.h"
+#include "mbedtls/base64.h"
 
-#define MARK_START(n) printf("\n********************	"n"	********************\n");
-#define MARK_END printf("\n********************	END	********************\n");
+#define MARK_START(n) 		printf("\n********************	"n"	********************\n");
+#define MARK_END 			printf("\n********************	END	********************\n");
+#define MAX_LEN			    255
+#define HEXDUMP_COLS    	16
 
 static int32_t __optiga_init(void);
 static int32_t __optiga_deinit(void);
@@ -58,6 +61,7 @@ static int __read_file (char *path, uint8_t **buffer, uint16_t *file_length);
 static void __print_hex (uint8_t *t);
 static void __print_str (uint8_t *t);
 static uint8_t * __append_tags (uint8_t *buffer, uint16_t length);
+void __hexdump(const void* p_buf, uint32_t l_len);
 
 extern void pal_gpio_init(void);
 extern void pal_gpio_deinit(void);
@@ -76,12 +80,105 @@ uint16_t COID = 0xE0E1;
 
 char * i2c_if;
 
+int pem2der(char *pem, uint16_t pem_size,
+			unsigned char *der, uint16_t *der_size )
+{
+	int ret;
+	unsigned char *beg_cert_pos;
+	unsigned char *end_cert_pos;
+	unsigned char *end = (unsigned char *)pem + pem_size;
+	size_t len = 0;
+
+    beg_cert_pos = (unsigned char *) strstr( pem, "-----BEGIN CERTIFICATE-----" );
+    if( beg_cert_pos == NULL ) return( -1 );
+
+    end_cert_pos = (unsigned char *) strstr( pem, "-----END CERTIFICATE-----" );
+    if( end_cert_pos == NULL ) return( -1 );
+
+    beg_cert_pos += sizeof("-----BEGIN CERTIFICATE-----");
+    if( *beg_cert_pos == '\r' ) beg_cert_pos++;
+    if( *beg_cert_pos == '\n' ) beg_cert_pos++;
+
+    if( end_cert_pos <= beg_cert_pos || end_cert_pos > end )
+        return( -1 );
+
+    ret = mbedtls_base64_decode( NULL, 0, &len, 
+								(unsigned char *) beg_cert_pos, end_cert_pos - beg_cert_pos );
+    if( ret == MBEDTLS_ERR_BASE64_INVALID_CHARACTER )
+        return( ret );
+
+    if( len > *der_size )
+        return( -1 );
+
+    if( ( ret = mbedtls_base64_decode( der, len, &len, 
+				( unsigned char *) beg_cert_pos, end_cert_pos - beg_cert_pos ) ) != 0 )
+    {
+        return( ret );
+    }
+
+    *der_size = len;
+
+    return( 0 );
+}
+
+/**
+ *
+ * Printout data in a standard hex view
+   0x000000: 2e 2f 68 65 78 64 75 6d ./hexdum
+   0x000008: 70 00 53 53 48 5f 41 47 p.SSH_AG
+   0x000010: 45 4e 54 5f             ENT_
+ */
+inline void __hexdump(const void* p_buf, uint32_t l_len) {
+	unsigned int i, j;
+	char str[MAX_LEN];
+	for (i = 0;	i < l_len + ((l_len % HEXDUMP_COLS) ?
+					( HEXDUMP_COLS - l_len % HEXDUMP_COLS) : 0);
+			i++) {
+		/* print offset */
+		if (i % HEXDUMP_COLS == 0) {
+			sprintf(str, "0x%06x: ", i);
+			printf("%s",str);
+		}
+
+		/* print hex data */
+		if (i < l_len) {
+			sprintf(str, "%02x ", 0xFF & ((char*) p_buf)[i]);
+			printf("%s",str);
+		} else /* end of block, just aligning for ASCII dump */
+		{
+			sprintf(str, "   ");
+			printf("%s",str);
+		}
+
+		/* print ASCII dump */
+		if (i % HEXDUMP_COLS == ( HEXDUMP_COLS - 1)) {
+			for (j = i - ( HEXDUMP_COLS - 1); j <= i; j++) {
+				if (j >= l_len) /* end of block, not really printing */
+				{
+					printf(" ");
+				} else if (isprint((int) ((char*) p_buf)[j])) /* printable char */
+				{
+					printf("%c", ((char*) p_buf)[j]);
+				} else /* other char */
+				{
+					printf(".");
+				}
+			}
+			printf("\r");
+			printf("\n");
+		}
+	}
+}
+
+
 int main(int argc, char * argv[])
 {
 	int ret = 0;
 	char * cert_file = 0;
-	uint8_t * cert_string;
-	uint16_t cert_size;
+	uint8_t * pem_cert;
+	uint16_t pem_cert_size;
+	uint8_t * der_cert;
+	uint16_t der_cert_size;
 
 	/* Parsing arguments of Method-call */
 
@@ -91,11 +188,11 @@ int main(int argc, char * argv[])
 				"-f  i2c_path   Path to i2c intreface; e.g. -f /dev/i2c-0 \n" 
 				"-c  cert_path  Path to certificate-file\n"
 				"-o  oid        Select Object ID to store new certificate within OPTIGA(TM) Trust X.\n"
-                                "               Can be 0xE0E1, 0xE0E2, 0xE0E3. 0xE0E1 is used by default\n");
+				"               Can be 0xE0E1, 0xE0E2, 0xE0E3. 0xE0E1 is used by default\n");
 		return EXIT_FAILURE;
 	}
 	int c;
-	while((c = getopt (argc, argv, "f:c:o:")) != -1) {
+	while((c = getopt (argc, argv, "f:c:o:d")) != -1) {
 			switch(c) {
 			case 'f':
 				i2c_if = optarg;
@@ -152,18 +249,6 @@ int main(int argc, char * argv[])
 
 	do 
 	{
-		/* Read certificate into memory */
-		if(!__read_file(cert_file, &cert_string, &cert_size)) {
-			MARK_START("Certificate read");
-			printf("Length: %d\n", cert_size);
-			__print_hex(cert_string);
-			MARK_END;
-		}
-		else {
-			printf("Reading certificate failed!\n");
-			ret = EXIT_FAILURE;
-			break;
-		}
 		/* Checking if the correct certificate was read
 		 * Could be deleted for a more streamlined program
 		 *
@@ -172,11 +257,11 @@ int main(int argc, char * argv[])
 		MARK_START("Parsing certificate");
 		mbedtls_x509_crt x509_certificate;
 		mbedtls_x509_crt_init(&x509_certificate);
-		if (!mbedtls_x509_crt_parse_der(&x509_certificate, cert_string, cert_size))
+		if (!mbedtls_x509_crt_parse_file(&x509_certificate, cert_file))
 		{
-			char * buffer = malloc(1024);
+			char * buffer = malloc(1500);
 			const char * prefix = "";
-			if(mbedtls_x509_crt_info(buffer, 1024, prefix, &x509_certificate) > 0) {
+			if(mbedtls_x509_crt_info(buffer, 1500, prefix, &x509_certificate) > 0) {
 				__print_str((uint8_t *)buffer);
 				free(buffer);
 			}
@@ -190,32 +275,41 @@ int main(int argc, char * argv[])
 			ret = EXIT_FAILURE;
 			break;
 		}
-		MARK_END;
 
 		/* Write file to TrustX
 		 *
-		 * Done with IFX Trust E toolbox
-		 * Writing works, but only with an minimum length-offset of either +13 or -2 (try and error method)
-		 * Negative offset produces errors on reading and parsing written certificate with mbedTls
-		 * This is why positive offset is used in this case (13 Bytes more data is written to chip, but it does not harm anything)
+		 * Done with IFX Trust X toolbox
 		 *
 		*/
 		/* Null any remains of former certificates in the memory */
-
+		/* Read certificate into memory */
+		if(!__read_file(cert_file, &pem_cert, &pem_cert_size)) {
+			MARK_START("Certificate read");
+			printf("%s\n", pem_cert);
+		}
+		else {
+			printf("Reading certificate failed!\n");
+			ret = EXIT_FAILURE;
+			break;
+		}
 		MARK_START("Writing certificate");
-
+		der_cert = malloc(1500);
+		der_cert_size = 1500;
+		pem2der((char *)pem_cert, pem_cert_size, der_cert, &der_cert_size);
 		/* Append tags in front of certificate  */
-		cert_string = __append_tags(cert_string, cert_size);
+		der_cert = __append_tags(der_cert, der_cert_size);
+		der_cert_size += 9;
+		
+		__hexdump(der_cert, der_cert_size);
 
 		/* Write certificate to memory */
-		if(__optiga_write_certificate(COID, cert_string, cert_size + 9)) 
+		if(__optiga_write_certificate(COID, der_cert, der_cert_size)) 
 		{
 			printf("\nCertificate not written!\n");
 		}
 		else {
 			printf("\nCertificate successfully written \n");
 		}
-		MARK_END;
 		
 		ret = EXIT_SUCCESS;
 	}while(0);
