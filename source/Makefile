@@ -34,7 +34,7 @@ ROOT_DIR = .
 
 OSFLAG :=
 ifeq ($(OS),Windows_NT)
-	OSFLAG = win32
+	OSFLAG = win
 	CCFLAGS += -D__WIN32__
 	ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
 		OSARCH = x86_64
@@ -63,7 +63,7 @@ else
 	endif
 endif
 
-BIN_DIR =              $(ROOT_DIR)/../executables/$(MAKECMDGOALS)_$(OSFLAG)_$(OSARCH)
+BIN_DIR =              $(ROOT_DIR)/../bin/$(MAKECMDGOALS)_$(OSFLAG)_$(OSARCH)
 BUILD_DIR =            $(ROOT_DIR)/build
 
 OPTIGA_CORE_OBJECTS =  $(patsubst %.c, $(BUILD_DIR)/%.o, $(SOURCES))
@@ -114,4 +114,4 @@ $(BUILD_DIR)/optiga_upload_crt: $(OPTIGA_CORE_OBJECTS) $(PAL_OBJECTS) $(UPLOAD_C
 	
 #Clean
 clean: 
-	-$(CLEAN) -rf $(BUILD_DIR) $(BIN_DIR)
+	-$(CLEAN) -rf $(BUILD_DIR)
