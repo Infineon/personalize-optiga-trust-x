@@ -2,7 +2,7 @@
 
 ## Description
 
-This repository contains one of Application Notes for [OPTIGA™ Trust X](www.infineon.com/optiga-trust-x) security chip.
+This repository contains one of Application Notes for [OPTIGA™ Trust X](https://www.infineon.com/cms/en/product/security-smart-card-solutions/optiga-embedded-security-solutions/optiga-trust/optiga-trust-x-sls-32aia/) security chip.
 
 * You can find more information about the security chip in the core [repository](https://github.com/Infineon/optiga-trust-x)
 * You can find other Application Notes in the respective [repository](https://github.com/Infineon/appnotes-optiga-trust-x)
@@ -22,6 +22,28 @@ For this application note you need to have:
   * One of FTDI I2C Adapters availble on market
 * OPTIGA™ Trust X which has opened i2c lines
 
+* You can personalize your OPTIGA™ Trust Shield 2Go either via a direct communication to i2c interface on any embedded linux board: e.g. Raspberry Pi3 or via an OPTIGA™ Trust Perso Shield(link pending)
+  * **via the direct I<sup>2</sup>C interface**
+    * An example connection with OPTIGA™ Trust X Security Shield 2Go and RPi3 is below. Note: This setup is valid, if you want to provision the device using a direct i2c connection. Alternative you can use an FTDI USB/i2c converter for this.
+![](https://github.com/Infineon/Assets/blob/master/Pictures/optiga_trust_x_rpi3_setup.jpg)
+
+  * **via the OPTIGA™ Trust Perso Shield(link pending)**
+    * In this case no special actions are required except for installation of the FTDI/libusb drivers
+    * Windows
+      * FTDI D2XX Direct [Drivers](https://www.ftdichip.com/Drivers/D2XX.htm)
+      * Unplug and plugin your device
+    * Linux; e.g. Debian based
+      * `apt-get install libusb-1.0-0-dev libusb-1.0-0`
+* AWS related settings:
+  * Install Python 2.7.10 or later
+  * Make sure the AWS CLI is installed on your system. For more information, see [Installing the AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/installing.html)
+  * Run `aws configure` to configure the AWS CLI. For more information, see [Configuring the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html)
+  * Use the following command to install the boto3 Python module: `$  pip install boto3`
+* Install [MSYS2](https://www.msys2.org/)
+  * Install Git client by executing the `pacman -S git git-gui` command in the MSYS2 environment
+  * _**Note: We recommend to use the 32bit version of the MSYS2 launcher, i.e. MSYS2 MinGW 32-bit**_ 
+
+
 ## Build from sources
 
 In order to obtain the sources we recommend to use following command:
@@ -33,9 +55,10 @@ Prior using the perso application note you need to build required bin from provi
 Copy this repository to your embedded system using any available method (USB stick, SSH transfer, SCP, etc.)
 ```console
 pi@raspberrypi:~ $ cd personalize-optiga-trust-x/source
-pi@raspberrypi:~/personalize-optiga-trust-x/source $ make linux|libusb
+pi@raspberrypi:~/personalize-optiga-trust-x/source $ make rpi3|libusb
 ```
-`linux` option is required when you have your security controller directly connected to your Linux machine via GPIOs, wheras `libusb` builds bin for the setup with the FTDI-I2C option
+
+`rpi3` option is required when you have your security controller directly connected to your RPi3 machine via GPIOs, wheras `libusb` builds executables for the setup with the FTDI-I2C option
 During the build process you should see console output as shown below
 <details> 
   <summary> Built process of mbedTLS and OPTIGA Trust X library</summary>
@@ -217,11 +240,13 @@ Your binaries are ready to be used and can be found in the folder bin in the roo
 ## Usage examples for binaries
 
 ```console
-pi@raspberrypi:~/personalize-optiga-trust-x/bin $ ./optiga_generate_csr -f /dev/i2c-1 -o optiga.csr -i ../IO_files/config.jsn
+
+pi@raspberrypi:~/personalize-optiga-trust-x/bin/rpi3_linux_arm $ ./optiga_generate_csr -f /dev/i2c-1 -o optiga.csr -i ../../IO_files/config.jsn
+
 ```
 * `-f /dev/i2c-1` Path to the i2c device to which # Infineon's OPTIGA&trade; Trust X is connected (Note: it might vary from paltform to platform)
 * `-o optiga.csr` Path to a file, where a generated Certificate Signing Request will be stored
-* `-i ../IO_file/config.jsn` JSON config file to define your own Distiguished Name for the End-Device Certificate
+* `-i ../../IO_file/config.jsn` JSON config file to define your own Distiguished Name for the End-Device Certificate
 
 Example `config.jsn`:
 
@@ -235,18 +260,12 @@ Example `config.jsn`:
 ```
 
 ```console
-pi@raspberrypi:~/personalize-optiga-trust-x/bin $ ./optiga_upload_crt -f /dev/i2c-1 -c certificate_in_der.der -o 0xE0E1
+pi@raspberrypi:~/personalize-optiga-trust-x/executables/rpi3_linux_arm $ ./optiga_upload_crt -f /dev/i2c-1 -c certificate_in_pem.pem -o 0xE0E1
 ```
 * `-f /dev/i2c-1` Path to the i2c device to which # Infineon's OPTIGA&trade; Trust X is connected
 * `-c certificate_in_der.der` DER encoded certificate which you want to upload to the device
 * `-0 0xE0E1` Optional parameter which defines in which Obejct ID to write the given certificate
 
-In order to convert PEM encoded certificate into DER encoded certificate you can use the following command
-
-```console
-pi@raspberrypi:~/personalize-optiga-trust-x/bin $ openssl x509 -in certificate_in_pem.pem -inform PEM -out certificate_in_der.der -outform DER
-
-```
 
 ## Issue an X.509 certificate
 
