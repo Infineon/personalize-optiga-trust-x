@@ -6,6 +6,7 @@ import subprocess
 import os
 import sys
 import shlex
+import platform
 
 class Certificate():
 
@@ -43,7 +44,7 @@ class Certificate():
     def __uploadcrt_linux__(self, exepath, i2cDev, certificateOid):
         try:
             subprocess.check_call(shlex.split(
-            'sudo {0}/optiga_upload_crt -f {1} -c {2}.der -o {3}'.format(exepath, i2cDev, self.id, certificateOid)))
+            'sudo {0}/optiga_upload_crt -f {1} -c {2}.pem -o {3}'.format(exepath, i2cDev, self.id, certificateOid)))
         except subprocess.CalledProcessError:
             print("Failed to write back newly generated certificate into the OPTIGA(TM) Trust X")
             sys.exit(1)
@@ -51,7 +52,7 @@ class Certificate():
     def __uploadcrt_libusb__(self, exepath, certificateOid):
         try:
             subprocess.check_call(shlex.split(
-            '{0}/optiga_upload_crt -c {1}.der -o {2}'.format(exepath, self.id, certificateOid)))
+            '{0}/optiga_upload_crt -c {1}.pem -o {2}'.format(exepath, self.id, certificateOid)))
         except subprocess.CalledProcessError:
             print("Failed to write back newly generated certificate into the OPTIGA(TM) Trust X")
             sys.exit(1)
@@ -61,9 +62,11 @@ class Certificate():
         csr_fn = cert_name + '.csr'
         csrconf_fn = cert_name + '.jsn'
         
-        assert exepath != '', "Please specify a path to OPTIGA(TM) executables; e.g. ../../executables/linux_win32_x86"
+        assert exepath != '', "Please specify a path to OPTIGA(TM) bin; e.g. ../../bin/linux_win32_x86"
         assert self.exists() == False, "Cert already exists"
 
+        exepath = "{0}/{1}".format("../../bin/", exepath)
+		
         if i2cDev == '':
             self.__gencsr_libusb__(exepath, cert_name, privateKeyOid)
         else:
@@ -79,13 +82,6 @@ class Certificate():
         cert_pem_file = open(self.id + '.pem', "w")
         cert_pem_file.write(cert["certificatePem"])
         cert_pem_file.close()
-
-        try:
-            subprocess.check_call(shlex.split(
-            'openssl x509 -in {0}.pem -inform PEM -out {0}.der -outform DER'.format(self.id)))
-        except subprocess.CalledProcessError:
-            print("Failed to convert PEM certificate into DER certificate")
-            sys.exit(1)
             
         if i2cDev == '':
             self.__uploadcrt_libusb__(exepath, certificateOid)
@@ -95,7 +91,6 @@ class Certificate():
         # Clean temp files
         os.remove(csr_fn)
         os.remove(self.id + '.pem')
-        os.remove(self.id + '.der')
         
         return cert
 
