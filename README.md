@@ -29,20 +29,20 @@ In order to obtain the sources we recommend to use following command:
 git clone --recursive https://github.com/Infineon/personalize-optiga-trust-x
 ```
 
-Prior using the perso application note you need to build required executables from provided sources.
+Prior using the perso application note you need to build required bin from provided sources.
 Copy this repository to your embedded system using any available method (USB stick, SSH transfer, SCP, etc.)
 ```console
 pi@raspberrypi:~ $ cd personalize-optiga-trust-x/source
 pi@raspberrypi:~/personalize-optiga-trust-x/source $ make linux|libusb
 ```
-`linux` option is required when you have your security controller directly connected to your Linux machine via GPIOs, wheras `libusb` builds executables for the setup with the FTDI-I2C option
+`linux` option is required when you have your security controller directly connected to your Linux machine via GPIOs, wheras `libusb` builds bin for the setup with the FTDI-I2C option
 During the build process you should see console output as shown below
 <details> 
   <summary> Built process of mbedTLS and OPTIGA Trust X library</summary>
 
 ```console
 mkdir -p ./build
-mkdir -p ./../executables
+mkdir -p ./../bin
 make -C ./mbedtls-2.6.0/ no_test
 make[1]: Entering directory '/home/pi/personalize-optiga-trust-x/source/mbedtls-2.6.0'
 make[2]: Entering directory '/home/pi/personalize-optiga-trust-x/source/mbedtls-2.6.0/library'
@@ -206,18 +206,18 @@ In file included from optiga_generate_csr.c:54:0:
 optiga_generate_csr.c:102:30: warning: format ‘%lu’ expects argument of type ‘long unsigned int’, but argument 2 has type ‘size_t {aka unsigned int}’ [-Wformat=]
      mbedtls_printf( " Size %lu\n", *sig_len);
                               ^
-Linking ../executables/optiga_generate_csr
+Linking ../bin/optiga_generate_csr
 Compiling optiga_upload_crt.c
-Linking ../executables/optiga_upload_crt
+Linking ../bin/optiga_upload_crt
 ```
 </details>
 
-Your binaries are ready to be used and can be found in the folder executables in the root directory of your project
+Your binaries are ready to be used and can be found in the folder bin in the root directory of your project
 
 ## Usage examples for binaries
 
 ```console
-pi@raspberrypi:~/personalize-optiga-trust-x/executables $ ./optiga_generate_csr -f /dev/i2c-1 -o optiga.csr -i ../IO_files/config.jsn
+pi@raspberrypi:~/personalize-optiga-trust-x/bin $ ./optiga_generate_csr -f /dev/i2c-1 -o optiga.csr -i ../IO_files/config.jsn
 ```
 * `-f /dev/i2c-1` Path to the i2c device to which # Infineon's OPTIGA&trade; Trust X is connected (Note: it might vary from paltform to platform)
 * `-o optiga.csr` Path to a file, where a generated Certificate Signing Request will be stored
@@ -235,7 +235,7 @@ Example `config.jsn`:
 ```
 
 ```console
-pi@raspberrypi:~/personalize-optiga-trust-x/executables $ ./optiga_upload_crt -f /dev/i2c-1 -c certificate_in_der.der -o 0xE0E1
+pi@raspberrypi:~/personalize-optiga-trust-x/bin $ ./optiga_upload_crt -f /dev/i2c-1 -c certificate_in_der.der -o 0xE0E1
 ```
 * `-f /dev/i2c-1` Path to the i2c device to which # Infineon's OPTIGA&trade; Trust X is connected
 * `-c certificate_in_der.der` DER encoded certificate which you want to upload to the device
@@ -244,7 +244,7 @@ pi@raspberrypi:~/personalize-optiga-trust-x/executables $ ./optiga_upload_crt -f
 In order to convert PEM encoded certificate into DER encoded certificate you can use the following command
 
 ```console
-pi@raspberrypi:~/personalize-optiga-trust-x/executables $ openssl x509 -in certificate_in_pem.pem -inform PEM -out certificate_in_der.der -outform DER
+pi@raspberrypi:~/personalize-optiga-trust-x/bin $ openssl x509 -in certificate_in_pem.pem -inform PEM -out certificate_in_der.der -outform DER
 
 ```
 
