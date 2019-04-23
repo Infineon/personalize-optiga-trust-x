@@ -27,7 +27,8 @@ class Certificate():
                 exepath, i2cDev, privateKeyOid, csr_fn, csrconf_fn)))
         except subprocess.CalledProcessError:
             print("Failed to generate a CSR using the OPTIGA(TM) Trust")
-            sys.exit(1)
+	    print("Next attempt...")
+            self.__gencsr_linux__(exepath, cert_name, i2cDev, privateKeyOid)
 
     def __gencsr_libusb__(self, exepath, cert_name, privateKeyOid):
         csr_fn = cert_name + '.csr'
@@ -39,7 +40,7 @@ class Certificate():
                 exepath, privateKeyOid, csr_fn, csrconf_fn)))
         except subprocess.CalledProcessError:
             print("Failed to generate a CSR using the OPTIGA(TM) Trust")
-            sys.exit(1)
+            self.__gencsr_libusb__(self, exepath, cert_name, privateKeyOid)
     
     def __uploadcrt_linux__(self, exepath, i2cDev, certificateOid):
         try:
@@ -47,7 +48,7 @@ class Certificate():
             'sudo {0}/optiga_upload_crt -f {1} -c {2}.pem -o {3}'.format(exepath, i2cDev, self.id, certificateOid)))
         except subprocess.CalledProcessError:
             print("Failed to write back newly generated certificate into the OPTIGA(TM) Trust X")
-            sys.exit(1)
+            self.__uploadcrt_linux__(self, exepath, i2cDev, certificateOid)
 
     def __uploadcrt_libusb__(self, exepath, certificateOid):
         try:
@@ -55,7 +56,7 @@ class Certificate():
             '{0}/optiga_upload_crt -c {1}.pem -o {2}'.format(exepath, self.id, certificateOid)))
         except subprocess.CalledProcessError:
             print("Failed to write back newly generated certificate into the OPTIGA(TM) Trust X")
-            sys.exit(1)
+            self.__uploadcrt_libusb__(self, exepath, certificateOid)
 
     def create(self, exepath = '', i2cDev = '', privateKeyOid = '0xE0F1', certificateOid = '0xE0E1'):
         cert_name = 'aws_optiga_cert'
