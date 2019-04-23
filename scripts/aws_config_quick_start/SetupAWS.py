@@ -67,23 +67,6 @@ def prereq():
     # Attach policy to certificate
     cert_obj.attach_policy(aws_config['policy_name'])
 
-def update_credential_file():
-    with open('configure.json') as file:
-        json_text = json.load(file)
-        aws_config = json_text["aws_config"]
-
-    thing_name = aws_config['thing_name']
-
-    # Read cert_pem from file
-    cert_pem_filename = thing_name + '_cert_pem_file'
-    try:
-        cert_pem_file = open(cert_pem_filename, 'r')
-    except IOError:
-        print("%s file not found. Run prerequisite step"%cert_pem_filename)
-        sys.exit(1)
-    else:
-        cert_pem = cert_pem_file.read()
-
 def delete_prereq():
     with open('configure.json') as file:
         json_text = json.load(file)
