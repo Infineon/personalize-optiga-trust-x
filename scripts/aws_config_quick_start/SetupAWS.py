@@ -97,7 +97,6 @@ def delete_prereq():
 
 def setup():
     prereq()
-    update_credential_file()
 
 def cleanup():
     delete_prereq()
