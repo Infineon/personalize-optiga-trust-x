@@ -39,19 +39,19 @@ def prereq():
         # Store certId
         cert_id = result['certificateId']
         cert_id_filename = thing_name + '_cert_id_file'
+        os.chmod(cert_id_file_path, 0o444)
         cert_id_file = open(cert_id_filename, 'w')
         cert_id_file.write(cert_id)
         cert_id_file_path = os.path.abspath(cert_id_filename)
-        os.chmod(cert_id_file_path, 0o444)
         cert_id_file.close()
 
         # Store cert_pem as file
         cert_pem = result['certificatePem']
         cert_pem_filename = thing_name + '_cert_pem_file'
+        os.chmod(cert_pem_file_path, 0o444)
         cert_pem_file = open(cert_pem_filename, 'w')
         cert_pem_file.write(cert_pem)
         cert_pem_file_path = os.path.abspath(cert_pem_filename)
-        os.chmod(cert_pem_file_path, 0o444)
         cert_pem_file.close()
 
     # Create a Policy if doesn't exist
