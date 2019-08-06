@@ -1,3 +1,5 @@
+# This repository moved [here](https://github.com/Infineon/personalize-optiga-trust)
+
 # Personalize your OPTIGA™ Trust X sample
 
 ## Description
